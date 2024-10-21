@@ -10,6 +10,7 @@ import datetime
 from datetime import datetime
 import bcrypt
 import sqlite3
+import numpy as np
 
 
 #from Web_scraper2 import App2
@@ -21,16 +22,15 @@ crypto_dict = dict(zip(crypto_name, crypto_symbols))
 
 class frmLogin():
     def __init__(self):
-        user = CCUser("User.db")
-        user.CreateTable()
-      
+        self.main()
         
-
+    def main(self):
+        # Create Login Frame 
+        self.user = CCUser("User.db")
         self.root = ctk.CTk()  
         self.root.title("Login & Signup")
         self.root.geometry("400x300")
 
-        # Create Login Frame 
         login_frame = ctk.CTkFrame(self.root)
         login_frame.grid(row=0, column=0, padx=10, pady=10)
 
@@ -39,8 +39,10 @@ class frmLogin():
 
         self.login_entry = ctk.CTkEntry(login_frame, placeholder_text="Username")
         self.login_entry.pack(pady=5)
+        self.login_password = ctk.CTkEntry(login_frame, placeholder_text="password")
+        self.login_password.pack(pady=5)
 
-        login_button = ctk.CTkButton(login_frame, text="Login", command=self.launch_app)
+        login_button = ctk.CTkButton(login_frame, text="Login", command=self.AttemptLogin)
         login_button.pack(pady=10)
 
         # Create Signup Frame 
@@ -48,31 +50,37 @@ class frmLogin():
         signup_frame.grid(row=0, column=1, padx=10, pady=10)
 
         signup_label = ctk.CTkLabel(signup_frame, text="Sign Up")
-        signup_label.pack(pady=5)
+        signup_label.pack(pady=5) 
 
         self.signup_entry = ctk.CTkEntry(signup_frame, placeholder_text="New Username")
         self.signup_entry.pack(pady=5)
+        self.signup_password = ctk.CTkEntry(signup_frame, placeholder_text="Enter Password", show="*")
+        self.signup_password.pack(pady=5)
 
-        signup_button = ctk.CTkButton(signup_frame, text="Sign Up")
+        signup_button = ctk.CTkButton(signup_frame, text="Sign Up", command=lambda: self.user.Insert(self.signup_entry.get(), self.signup_password.get()))
         signup_button.pack(pady=10)
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
 
         self.root.mainloop()
 
-    def launch_app(self):  
+    def LaunchApp(self):  
         self.root.destroy()  
-        app = App()  
+        self.app = App()
+    
+        
 
-  
+    def AttemptLogin(self):
+        username = self.login_entry.get()
+        password = self.login_password.get()
+
+        if self.user.Login(username, password):
+            self.LaunchApp()
+        else:
+            messagebox.showerror("Login Failed", "Invalid username or password.")
 
     def on_close(self):
-        self.root.destroy()
-
-
-
-
-        
+        self.root.destroy()   
 
 class App:
     def __init__(self):
@@ -90,9 +98,7 @@ class App:
         self.root = ctk.CTk()  #
         self.root.title("Webscraper")
         self.root.geometry('1300x800')
-        self.root.resizable(False, False)
-       
-        usdToAud = 1.5
+        self.root.resizable(False, False)       
 
     
         # Widget menu frame
@@ -106,6 +112,7 @@ class App:
         btnExport = ctk.CTkButton(widgetmenu,corner_radius=8,text="export all values to txtFile", command=self.export_to_txt)
         btnExport.grid(row=2,column=0,pady=20,padx=20)
 
+
         # Main menu frame
         mainmenu = ctk.CTkFrame(self.root, height=750, width=1225, corner_radius=8)
         mainmenu.grid(row=0, column=1, padx=20, pady=20, sticky="n")
@@ -113,26 +120,27 @@ class App:
         lblWelcome.grid(row=0,column=0,padx=20, pady=20)
         lblMessage = ctk.CTkLabel(mainmenu, corner_radius=8,width=50,height=50,text="All Graphs in AUD", font=ctk.CTkFont(family='Arial', size=10))
         lblMessage.grid(row=0,column=1,padx=20, pady=20)
-        btnBitcoin = ctk.CTkLabel(mainmenu, corner_radius=8,text=f"{self.lista[0]}, Currency: {self.CleanValue(self.lista[1])}", width=300)
-        btnBitcoin.grid(row=1,column=0,padx=20, pady=20, sticky="n")
-        btnLitecoin = ctk.CTkLabel(mainmenu,corner_radius=8,text=f"{self.lista[2]}, Currency: {self.lista[3]}", width=300)
-        btnLitecoin.grid(row=2,column=0,padx=20, pady=20)
-        btnEthereum = ctk.CTkLabel(mainmenu,corner_radius=8,text=f"{self.lista[4]}, Currency: {self.lista[5]}", width=300)
-        btnEthereum.grid(row=3,column=0,padx=20, pady=20)
-        btnSolana = ctk.CTkLabel(mainmenu,corner_radius=8,text=f"{self.lista[6]}, Currency: {self.lista[7]}",width=300)
-        btnSolana.grid(row=4,column=0,padx=20, pady=20)
-        btnSyscoin = ctk.CTkLabel(mainmenu,corner_radius=8,text=f"{self.lista[8]}, Currency: {self.lista[9]}", width=300)
-        btnSyscoin.grid(row=5,column=0,padx=20, pady=20)
-        btnGraph1 = ctk.CTkButton(mainmenu,corner_radius=8, text=f"Show {self.lista[0]} Graph", command=lambda: Graph(crypto_dict.get(self.lista[0])))
-        btnGraph1.grid(row=1,column=1,padx=20, pady=20, sticky="n")
-        btnGraph2 = ctk.CTkButton(mainmenu,corner_radius=8, text=f"Show {self.lista[2]} Graph", command=lambda: Graph(crypto_dict.get(self.lista[2])))
-        btnGraph2.grid(row=2,column=1,padx=20, pady=20, sticky="n")
-        btnGraph3 = ctk.CTkButton(mainmenu,corner_radius=8, text=f"Show {self.lista[4]} Graph", command=lambda: Graph(crypto_dict.get(self.lista[4])))
-        btnGraph3.grid(row=3,column=1,padx=20, pady=20, sticky="n")
-        btnGraph4 = ctk.CTkButton(mainmenu,corner_radius=8, text=f"Show {self.lista[6]} Graph", command=lambda: Graph(crypto_dict.get(self.lista[6])))
-        btnGraph4.grid(row=4,column=1,padx=20, pady=20, sticky="n")
-        btnGraph5 = ctk.CTkButton(mainmenu,corner_radius=8, text=f"Show {self.lista[8]} Graph", command=lambda: Graph(crypto_dict.get(self.lista[8])))
-        btnGraph5.grid(row=5,column=1,padx=20, pady=20, sticky="n")
+
+        btnCryptos = np.zeros(10, object)
+        a = 0
+        b = 1
+        while a < 9:    
+            btnCryptos[a] = ctk.CTkLabel(mainmenu, corner_radius=8,text=f"{self.lista[a]}, Currency: {self.lista[a + 1]}", width=300)
+            btnCryptos[a].grid(row=b,column=0,padx=20, pady=20, sticky="n")
+            a += 2
+            b += 1
+
+
+        
+        btnGraphs = np.zeros(10, object)
+        i = 0
+        j = 1
+        while i < 9:
+            btnGraphs[i] = ctk.CTkButton(mainmenu,corner_radius=8, text=f"Show {self.lista[i]} Graph", command=lambda: Graph(crypto_dict.get(self.lista[i])))
+            btnGraphs[i].grid(row=j,column=1,padx=20, pady=20, sticky="n")
+            j += 1
+            i += 2
+
 
         #Footer
         Footer = ctk.CTkFrame(self.root, height=300, width=1225, corner_radius=8)
@@ -148,9 +156,7 @@ class App:
         cbxWebsite.grid(row=3,column=0,padx=20, pady=5, sticky="n")
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
-       
-
-
+    
         self.root.mainloop() 
     def CheckCBX(self, cbx):
         if cbx == 'Crypto.com':
@@ -165,10 +171,6 @@ class App:
         elif choice == "Light Mode":
             ctk.set_appearance_mode("light")
 
-    def CleanValue(self,list):
-        clean = list.replace(",", "").replace(".", "").replace("$","")
-        
-        return clean
 
     def on_close(self):
         self.root.destroy()
@@ -218,7 +220,7 @@ class App:
         value = soup.find('td', {'class':'mont fs-16'})
         rows = table.find_all('tr')
         
-        #self.lista = []
+       
 
         for row in rows:
             name = row.find('span', {'class': 'coinname hidden-xs'})
@@ -228,8 +230,7 @@ class App:
                 self.lista.append(name.text.strip())
                 self.lista.append(value.text.strip())
                 #print(name.text.strip() + ' ' + value.text.strip())
-        print(self.lista)    
-        print(self.CleanValue("23.53,4"))
+        
        
 
 
@@ -271,26 +272,28 @@ class App2():
         lblWelcome.grid(row=0,column=0,padx=20, pady=20)
         lblMessage = ctk.CTkLabel(mainmenu, corner_radius=8,width=50,height=50,text="All Graphs in AUD", font=ctk.CTkFont(family='Arial', size=10))
         lblMessage.grid(row=0,column=1,padx=20, pady=20)
-        btnBitcoin = ctk.CTkLabel(mainmenu, corner_radius=8,text=f"{self.lista[0]}, Currency: {self.lista[1] * int(usdToAud) }", width=300)
-        btnBitcoin.grid(row=1,column=0,padx=20, pady=20, sticky="n")
-        btnLitecoin = ctk.CTkLabel(mainmenu,corner_radius=8,text=f"{self.lista[2]}, Currency: {self.lista[3]}", width=300)
-        btnLitecoin.grid(row=2,column=0,padx=20, pady=20)
-        btnEthereum = ctk.CTkLabel(mainmenu,corner_radius=8,text=f"{self.lista[4]}, Currency: {self.lista[5]}", width=300)
-        btnEthereum.grid(row=3,column=0,padx=20, pady=20)
-        btnSolana = ctk.CTkLabel(mainmenu,corner_radius=8,text=f"{self.lista[6]}, Currency: {self.lista[7]}",width=300)
-        btnSolana.grid(row=4,column=0,padx=20, pady=20)
-        btnSyscoin = ctk.CTkLabel(mainmenu,corner_radius=8,text=f"{self.lista[8]}, Currency: {self.lista[9]}", width=300)
-        btnSyscoin.grid(row=5,column=0,padx=20, pady=20)
-        btnGraph1 = ctk.CTkButton(mainmenu,corner_radius=8, text=f"Show {self.lista[0]} Graph", command=lambda: Graph(crypto_dict.get(self.lista[0])))
-        btnGraph1.grid(row=1,column=1,padx=20, pady=20, sticky="n")
-        btnGraph2 = ctk.CTkButton(mainmenu,corner_radius=8, text=f"Show {self.lista[2]} Graph", command=lambda: Graph(crypto_dict.get(self.lista[2])))
-        btnGraph2.grid(row=2,column=1,padx=20, pady=20, sticky="n")
-        btnGraph3 = ctk.CTkButton(mainmenu,corner_radius=8, text=f"Show {self.lista[4]} Graph", command=lambda: Graph(crypto_dict.get(self.lista[4])))
-        btnGraph3.grid(row=3,column=1,padx=20, pady=20, sticky="n")
-        btnGraph4 = ctk.CTkButton(mainmenu,corner_radius=8, text=f"Show {self.lista[6]} Graph", command=lambda: Graph(crypto_dict.get(self.lista[6])))
-        btnGraph4.grid(row=4,column=1,padx=20, pady=20, sticky="n")
-        btnGraph5 = ctk.CTkButton(mainmenu,corner_radius=8, text=f"Show {self.lista[8]} Graph", command=lambda: Graph(crypto_dict.get(self.lista[8])))
-        btnGraph5.grid(row=5,column=1,padx=20, pady=20, sticky="n")
+
+        btnCryptos = np.zeros(10, object)
+        a = 0
+        b = 1
+
+        while a < 9:    
+            btnCryptos[a] = ctk.CTkLabel(mainmenu, corner_radius=8,text=f"{self.lista[a]}, Currency: {self.lista[a + 1]}", width=300)
+            btnCryptos[a].grid(row=b,column=0,padx=20, pady=20, sticky="n")
+            a += 2
+            b += 1
+
+        btnGraphs = np.zeros(10, object)
+        i = 0
+        j = 1
+        while i < 9:
+            btnGraphs[i] = ctk.CTkButton(mainmenu,corner_radius=8, text=f"Show {self.lista[i]} Graph", command=lambda: Graph(crypto_dict.get(self.lista[i])))
+            btnGraphs[i].grid(row=j,column=1,padx=20, pady=20, sticky="n")
+            j += 1
+            i += 2
+
+
+        
 
         #Footer
         Footer = ctk.CTkFrame(self.root1, height=300, width=1225, corner_radius=8)
@@ -370,66 +373,12 @@ class App2():
                 self.lista.append(name.text.strip())
                 self.lista.append(value.text.strip())
 
+
+
+
 if __name__ == "__main__":
     frmLogin()
 
-
-class CCUser:
-    def __init__(self, db_name: str = "User.Db"):
-        self.conn = sqlite3.connect(db_name)
-        self.cursor = self.conn.cursor()
-        
-        self.CreateTable()
-        self.Insert("John55", "hi")  
-        self.Login()
-
-    def CreateTable(self):
-        """Create the user table."""
-        self.cursor.execute("DROP TABLE IF EXISTS tblUser")
-        self.conn.commit()
-        self.cursor.execute(
-            "CREATE TABLE tblUser (Username VARCHAR UNIQUE, Password TEXT)"
-        )
-        self.conn.commit()
-
-    def Insert(self, username, password):
-        """Insert a user with a hashed password."""
-        try:
-            hashedpw = self.HashInput(password)
-            query = "INSERT INTO tblUser (Username, Password) VALUES (?, ?)"
-            self.cursor.execute(query, (username, hashedpw))
-            self.conn.commit()
-            print(f"Inserted user '{username}' with hashed password: {hashedpw}")
-        except sqlite3.Error as e:
-            print(f"Unable to insert: {e}")
-
-    def Search(self, username):
-        """Search for the user by username and return the password hash."""
-        query = "SELECT Password FROM tblUser WHERE Username = ?"
-        self.cursor.execute(query, (username,))
-        result = self.cursor.fetchone()
-        self.conn.commit()
-        return result
-
-    def Login(self):
-        """Prompt the user for login and verify their credentials."""
-        username = input("\nUsername: ")
-        password = input("Password: ")
-
-        result = self.Search(username)
-        if result:
-            stored_hash = result[0]
-            if bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8')):
-                print("Logged In!")
-            else:
-                print("Incorrect password.")
-        else:
-            print("Username not found.")
-
-    def HashInput(self, password):
-        salt = bcrypt.gensalt()
-        hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
-        return hashed.decode('utf-8')
 
 
 
