@@ -23,13 +23,14 @@ class CCUser:
         #Insert a user with a hashed password.
         IsLoggedIn = False
         try:
-            hashedpw = self.HashInput(password)
-            query = "INSERT INTO tblUser (Username, Password) VALUES (?, ?)"
-            self.cursor.execute(query, (username, hashedpw))
-            self.conn.commit()
-            print(f"Inserted user '{username}' with hashed password: {hashedpw}")
-            IsLoggedIn = True
-            return IsLoggedIn 
+            if len(password) > 8:
+                hashedpw = self.HashInput(password)
+                query = "INSERT INTO tblUser (Username, Password) VALUES (?, ?)"
+                self.cursor.execute(query, (username, hashedpw))
+                self.conn.commit()
+                print(f"Inserted user '{username}' with hashed password: {hashedpw}")
+                IsLoggedIn = True
+                return IsLoggedIn 
         except sqlite3.Error as e:
             print(f"Unable to insert: {e}")
             
