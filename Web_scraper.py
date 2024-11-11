@@ -10,16 +10,14 @@ import datetime
 from datetime import datetime
 import numpy as np
 
-
-
 crypto_name = ['Bitcoin', 'Ethereum', 'Tether', 'Binance Coin', 'Cardano', 'XRP', 'Solana', 'Polkadot', 'Dogecoin', 'Shiba Inu', 'Avalanche', 'Chainlink', 'Uniswap', 'Litecoin', 'Stellar', 'VeChain', 'Theta', 'TRON', 'Monero', 'EOS', 'Cosmos', 'Aave', 'IOTA', 'Tezos', 'FTX Token', 'NEO', 'Kusama', 'Dash', 'Zcash', 'Waves', 'Compound', 'Maker', 'Huobi Token', 'SushiSwap', 'Terra', 'Algorand', 'Celo', 'Enjin Coin', 'Zilliqa', 'Decred', 'Qtum', 'OMG Network', 'Hedera', 'Harmony', 'Fantom', '1inch', 'Chiliz', 'Synthetix', 'Basic Attention Token', 'Yearn.Finance', 'Artificial Superintelligence Alliance', 'BNB', 'Polygon']
 crypto_symbols = ['BTC-AUD', 'ETH-AUD', 'USDT-AUD', 'BNB-AUD', 'ADA-AUD', 'XRP-AUD', 'SOL-AUD', 'DOT-AUD', 'DOGE-AUD', 'SHIB-AUD', 'AVAX-AUD', 'LINK-AUD', 'UNI-AUD', 'LTC-AUD', 'XLM-AUD', 'VET-AUD', 'THETA-AUD', 'TRX-AUD', 'XMR-AUD', 'EOS-AUD', 'ATOM-AUD', 'AAVE-AUD', 'MIOTA-AUD', 'XTZ-AUD', 'FTT-AUD', 'NEO-AUD', 'KSM-AUD', 'DASH-AUD', 'ZEC-AUD', 'WAVES-AUD', 'COMP-AUD', 'MKR-AUD', 'HT-AUD', 'SUSHI-AUD', 'LUNA-AUD', 'ALGO-AUD', 'CELO-AUD', 'ENJ-AUD', 'ZIL-AUD', 'DCR-AUD', 'QTUM-AUD', 'OMG-AUD', 'HBAR-AUD', 'ONE-AUD', 'FTM-AUD', '1INCH-AUD', 'CHZ-AUD', 'SNX-AUD', 'BAT-AUD', 'YFI-AUD', 'ASI-AUD', 'BNB-AUD', 'MATIC-AUD']
 crypto_dict = dict(zip(crypto_name, crypto_symbols))
 
 class frmLogin():
+    Username= ""
     def __init__(self):
-        self.main()
-        
+        self.main()                  
     def main(self):
         # Create Login Frame 
         self.user = CCUser("User.db")
@@ -65,7 +63,11 @@ class frmLogin():
         self.app = App()
     
     def AttemptLogin(self):
+        self.signup_entry._placeholder_text = "New Username"
+        self.signup_password._placeholder_text = "New Password"
         username = self.login_entry.get()
+        App.Username = username
+        App2.Username = username
         password = self.login_password.get()
         if self.user.Login(username, password):
             messagebox.showinfo("Successful", "Successful, press Okay to continue")
@@ -75,20 +77,22 @@ class frmLogin():
             self.login_password.delete(0,ctk.END)
             self.login_entry._placeholder_text = "Username"
             self.login_password._placeholder_text = "Password"
-            messagebox.showerror("Login Failed", "Invalid username or password.")
+            
 
     def AttemptSignUp(self):
+        self.signup_entry._placeholder_text = "New Username"
+        self.signup_password._placeholder_text = "New Password"
         username = self.signup_entry.get()
         password = self.signup_password.get()
-        if len(password) < 8 or len(username) < 4:
-            messagebox.showerror("Signup Failed", "Username must be minimum 4 Characters, Password must be minimum 8 characters. (If both of these are met, username may be in use already)")
-            self.signup_entry.delete(0,ctk.END)
-            self.signup_password.delete(0,ctk.END)
+        if self.user.Insert(username, password):
+            messagebox.showinfo("Successful", "Please Login Now")  
             self.signup_entry._placeholder_text = "New Username"
+            self.signup_password._placeholder_text = "New Password"                
+        else:               
+            self.signup_password.delete(0,ctk.END)
             self.signup_password._placeholder_text = "New Password"
-        else:
-           if self.user.Insert(username, password):
-               messagebox.showinfo("Successful", "Please Login Now")
+               
+        
             
 
     def on_close(self):
@@ -100,6 +104,7 @@ class App:
         self.lista = []
         self.get_cryptos('https://www.coinspot.com.au/')
         self.main() 
+        self.Username = ""
 
     def main(self):                            
        #Sets the default gui theme and color theme
@@ -112,18 +117,20 @@ class App:
         self.root.geometry('1300x800')
         self.root.resizable(False, False)       
 
-        
-
         # Widget menu frame
         widgetmenu = ctk.CTkFrame(self.root, height=550, width=350, corner_radius=8)
         widgetmenu.grid(row=0, column=0, padx=20, pady=20, sticky="n")
-        btnSignOut = ctk.CTkButton(widgetmenu, corner_radius=8, text="Sign out", command=self.SignOut)
-        btnSignOut.grid(row=0, column=0, pady=10)
+        try:
+            btnSignOut = ctk.CTkButton(widgetmenu, corner_radius=8, text="Sign out", command=self.SignOut)
+            btnSignOut.grid(row=0, column=0, pady=10)
+        except:
+            messagebox.showerror("Unable to Sign up", "Unable to Sign up")
         cmbThemes = ctk.CTkComboBox(widgetmenu, corner_radius=8, values=['Dark Mode', "Light Mode"], command=self.changeTheme)
         cmbThemes.grid(row=1, column=0, pady=(10, 0))
         cmbThemes.set("Dark")
         uiScale = ctk.CTkOptionMenu(widgetmenu, values=["80%", "90%", "100%", "110%", "120%"], command=self.UiScaling)
         uiScale.grid(row=2,column=0, pady=10, sticky="n")
+        uiScale.set("100%")
         btnExport = ctk.CTkButton(widgetmenu,corner_radius=8,text="export all values to txtFile", command=self.export_to_txt)
         btnExport.grid(row=3,column=0,pady=10)
         
@@ -132,9 +139,9 @@ class App:
         # Main menu frame
         mainmenu = ctk.CTkFrame(self.root, height=750, width=1225, corner_radius=8)
         mainmenu.grid(row=0, column=1, padx=20, pady=20, sticky="n")
-        lblWelcome = ctk.CTkLabel(mainmenu, corner_radius=8,width=1,height=50,text="Lachlans Crypto Scraper", font=ctk.CTkFont(family='Arial', size=40))
+        lblWelcome = ctk.CTkLabel(mainmenu, corner_radius=8,width=1,height=50,text=f"{self.Username} Crypto Scraper", font=ctk.CTkFont(family='Arial', size=40))
         lblWelcome.grid(row=0,column=0,padx=20, pady=20)
-        lblMessage = ctk.CTkLabel(mainmenu, corner_radius=8,width=50,height=50,text="All Graphs in AUD", font=ctk.CTkFont(family='Arial', size=10))
+        lblMessage = ctk.CTkLabel(mainmenu, corner_radius=8,width=1,height=50,text="All Values AUD. Graphs are in Aud", font=ctk.CTkFont(family='Arial', size=20))
         lblMessage.grid(row=0,column=1,padx=20, pady=20)
 
         btnCryptos = np.zeros(10, object)
@@ -180,6 +187,7 @@ class App:
 
     def SignOut(self):
         self.root.destroy()
+        self.Username = ""
         frmLogin()
         
 
@@ -199,14 +207,18 @@ class App:
         match scalingValue:
             case "80%":
                 ctk.set_widget_scaling(0.8)
+                self.root.geometry("1040x640")
             case "90%":
                 ctk.set_widget_scaling(0.9)
+                self.root.geometry("1170x720")
             case "100%":
                 ctk.set_widget_scaling(1.0)
             case "110%":
                 ctk.set_widget_scaling(1.1)
+                self.root.geometry("1430x880")
             case "120%":
                 ctk.set_widget_scaling(1.2)
+                self.root.geometry("1560x960")
 
     # Export current top cryptos and their values to txt File
     def export_to_txt(self):
@@ -254,15 +266,14 @@ class App2():
         self.main()
         self.symbols = []
         self.lista = []
+        self.Username = ""
+        
     def main(self):
         self.root1 = ctk.CTk()  #
         self.root1.title("Webscraper")
         self.root1.geometry('1300x800')
         self.root1.resizable(False, False)
-        
-        
-
-                           
+                              
        #Sets the default gui theme and color theme
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("dark-blue")
@@ -270,21 +281,25 @@ class App2():
         # Widget menu frame
         widgetmenu = ctk.CTkFrame(self.root1, height=550, width=350, corner_radius=8)
         widgetmenu.grid(row=0, column=0, padx=20, pady=20, sticky="n")
+        btnSignOut = ctk.CTkButton(widgetmenu, corner_radius=8, text="Sign out", command=self.SignOut)
+        btnSignOut.grid(row=0, column=0, pady=10)
         cmbThemes = ctk.CTkComboBox(widgetmenu, corner_radius=8, values=['Dark Mode', "Light Mode"], command=self.changeTheme)
-        cmbThemes.grid(row=0, column=0, pady=(10, 0))
+        cmbThemes.grid(row=1, column=0, pady=(10, 0))
         cmbThemes.set("Dark")
         uiScale = ctk.CTkOptionMenu(widgetmenu, values=["80%", "90%", "100%", "110%", "120%"], command=self.UiScaling)
-        uiScale.grid(row=1,column=0, padx=20, pady=20, sticky="n")
+        uiScale.grid(row=2,column=0, pady=10, sticky="n")
+        uiScale.set("100%")
         btnExport = ctk.CTkButton(widgetmenu,corner_radius=8,text="export all values to txtFile", command=self.export_to_txt)
-        btnExport.grid(row=2,column=0,pady=20,padx=20)
+        btnExport.grid(row=3,column=0,pady=10)
 
         # Main menu frame
         mainmenu = ctk.CTkFrame(self.root1, height=750, width=1225, corner_radius=8)
         mainmenu.grid(row=0, column=1, padx=20, pady=20, sticky="n")
-        lblWelcome = ctk.CTkLabel(mainmenu, corner_radius=8,width=1,height=50,text="Lachlans Crypto Scraper", font=ctk.CTkFont(family='Arial', size=40))
+        lblWelcome = ctk.CTkLabel(mainmenu, corner_radius=8,width=1,height=50,text=f"{self.Username} Crypto Scraper", font=ctk.CTkFont(family='Arial', size=40))
         lblWelcome.grid(row=0,column=0,padx=20, pady=20)
-        lblMessage = ctk.CTkLabel(mainmenu, corner_radius=8,width=50,height=50,text="All Graphs in AUD", font=ctk.CTkFont(family='Arial', size=10))
+        lblMessage = ctk.CTkLabel(mainmenu, corner_radius=8,width=1,height=50,text="All Values USD. Graphs are in Aud", font=ctk.CTkFont(family='Arial', size=20))
         lblMessage.grid(row=0,column=1,padx=20, pady=20)
+        
 
         btnCryptos = np.zeros(10, object)
         a = 0
@@ -340,14 +355,18 @@ class App2():
         match scalingValue:
             case "80%":
                 ctk.set_widget_scaling(0.8)
+                self.root.geometry("1040x640")
             case "90%":
                 ctk.set_widget_scaling(0.9)
+                self.root.geometry("1170x720")
             case "100%":
                 ctk.set_widget_scaling(1.0)
             case "110%":
                 ctk.set_widget_scaling(1.1)
+                self.root.geometry("1430x880")
             case "120%":
                 ctk.set_widget_scaling(1.2)
+                self.root.geometry("1560x960")
     # Export current top cryptos and their values to txt File
     def export_to_txt(self):
         date = datetime.today().strftime('%d-%m-%Y')
@@ -365,6 +384,10 @@ class App2():
         if r.status_code == 200:
             print("Website up!")
             return "Website Up!"
+    def SignOut(self):
+        self.root1.destroy()
+        self.Username = ""
+        frmLogin()
 
     def crypto_details(self, url):
         URL = url

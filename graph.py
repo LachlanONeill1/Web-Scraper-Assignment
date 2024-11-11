@@ -10,6 +10,3 @@ class Graph():
 
         data = yf.download(crypto_symbol, start=start, end=end)
         mpf.plot(data, type="candle", style="yahoo")
-
-if __name__ == "__main__":
-    Graph()
